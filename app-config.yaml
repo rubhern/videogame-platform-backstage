@@ -12,6 +12,7 @@ backend:
   # auth:
   #   keys:
   #     - secret: ${BACKEND_SECRET}
+  workingDirectory: C:/Users/rubenhernandez/workspace/backstageTmp
   baseUrl: http://localhost:7007
   listen:
     port: 7007
@@ -85,6 +86,11 @@ catalog:
     # Local example template
     - type: file
       target: ../../examples/template/template.yaml
+      rules:
+        - allow: [Template]
+        
+    - type: file
+      target: ../../templates/template.yaml
       rules:
         - allow: [Template]
 

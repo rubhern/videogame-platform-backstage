@@ -8,3 +8,5 @@ To start the app, run:
 yarn install
 yarn start
 ```
+
+It is mandatory to execute with this property NODE_OPTIONS=--no-node-snapshot

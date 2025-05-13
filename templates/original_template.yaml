@@ -1,0 +1,83 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: rest-postgres-service           # identificador único
+  title: Servicio REST + PostgreSQL
+  description: >
+    Crea un microservicio Java (Spring Boot) con base de datos Postgres,
+    Dockerfile, docker-compose y CI GitHub Actions listos.
+  tags: [java, spring, postgres]
+spec:
+  owner: platform-engineering           # aparece como “owner” de la plantilla
+  type: service                         # la agrupa bajo la pestaña “Service”
+  parameters:
+    - title: Datos del servicio
+      required: [componentId, owner, system]
+      properties:
+        componentId:
+          title: Nombre del componente
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          description: Usado como nombre del repo y Artifact Id
+        owner:
+          title: Owner (Team/Group)
+          type: string
+        system:
+          title: Sistema / Dominio
+          type: string
+    - title: Ajustes de base de datos
+      properties:
+        dbName:
+          title: Nombre de la BD
+          type: string
+          default: appdb
+  steps:
+    # 1) Trae el arquetipo Maven tal cual
+    - id: fetch-archetype
+      name: Fetch archetype
+      action: fetch:plain
+      input:
+        url: https://github.com/tu-org/rest-postgre-archetype.git
+        checkout: main
+
+    # 2) Ejecuta el arquetipo generando el proyecto destino
+    - id: mvn-generate
+      name: Run Maven Archetype
+      action: run:script
+      input:
+        script: |
+          mvn -B archetype:generate \
+              -DarchetypeCatalog=local \
+              -DarchetypeGroupId=com.videogame.platform \
+              -DarchetypeArtifactId=rest-postgre-archetype \
+              -DarchetypeVersion=1.0.0 \
+              -DgroupId=com.videogame.platform \
+              -DartifactId={{ parameters.componentId }} \
+              -Dversion=0.0.1-SNAPSHOT \
+              -DdbName={{ parameters.dbName }}
+
+    # 3) Publica el repo recién creado en la org GitHub
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        repoUrl: github.com?owner={{ parameters.owner }}&repo={{ parameters.componentId }}
+        defaultBranch: main
+        description: >
+          Servicio REST generado por plantilla Backstage
+      # el token lo toma del integration.github en app-config
+
+    # 4) Registra el componente en el Catálogo
+    - id: register
+      name: Register component
+      action: catalog:register
+      input:
+        repoContentsUrl: '{{ steps.publish.output.repoContentsUrl }}'
+        catalogInfoPath: 'catalog-info.yaml'
+  output:
+    links:
+      - title: Repositorio
+        url: '{{ steps.publish.output.remoteUrl }}'
+      - title: Ver en Backstage
+        icon: catalog
+        entityRef: '{{ steps.register.output.entityRef }}'

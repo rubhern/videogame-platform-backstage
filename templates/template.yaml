@@ -1,0 +1,78 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: rest-postgres-service           # identificador único
+  title: Servicio REST + PostgreSQL
+  description: >
+    Crea un microservicio Java (Spring Boot) con base de datos Postgres,
+    Dockerfile, docker-compose y CI GitHub Actions listos.
+  tags: [java, spring, postgres]
+spec:
+  owner: developer-team
+  type: service
+  parameters:
+    - title: Service data
+      required: [artifactId, owner, entity]
+      properties:
+        artifactId:
+          title: Artifact ID
+          type: string
+          pattern: '^[a-z0-9-]+$'
+          description: Repo name and artifact id
+        owner:
+          title: Owner (Team/Group)
+          type: string
+        entity:
+          title: Entity / Domain
+          type: string
+        serverPort:
+          title: HTTP Port
+          type: string
+        groupId:
+          title: Group ID
+          type: string
+        servicePackage:
+          title: Package
+          type: string
+        uncapitalizedEntity:
+          title: Uncapitalized Entity
+          type: string
+          description: Same as entity but first letter lowercase                                                
+    - title: Database info
+      properties:
+        dbName:
+          title: Database name
+          type: string
+        dbUser:
+          title: Database user
+          type: string
+        dbPassword:
+          title: Database pass
+          type: string
+  steps:
+    #- id: fetch-archetype
+    #  name: Fetch archetype
+    #  action: fetch:plain
+    #  input:
+    #    url: https://github.com/rubhern/videogame-platform/tree/main/archetypes/rest-postgre-archetype
+    #    targetPath: ./archetype
+
+    - id: generate
+      name: Execute Maven
+      action: mycompany:maven:generate
+      input:
+        groupId: ${{ parameters.groupId }}
+        artifactId: ${{ parameters.artifactId }}
+        servicePackage: ${{ parameters.servicePackage }}
+        entity: ${{ parameters.entity }}
+        serverPort: ${{ parameters.serverPort }}
+        dbName: ${{ parameters.dbName }}
+        dbUser: ${{ parameters.dbUser }}
+        dbPassword: ${{ parameters.dbPassword }}
+        uncapitalizedEntity: ${{ parameters.uncapitalizedEntity }}
+        
+    - id: zip
+      name: Zip artifact
+      action: mycompany:archive:zip
+      input:
+        outputName: '${{ parameters.artifactId }}.zip'
